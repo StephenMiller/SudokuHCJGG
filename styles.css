@@ -11,7 +11,8 @@ body {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     gap: 2px;
-    border: 2px solid #333;
+    border: 2px solid #333; /* Border for the entire grid */
+    position: relative; /* Make the .sudoku-grid container a positioned parent */
 }
 
 .sudoku-cell {
@@ -19,12 +20,57 @@ body {
     align-items: center;
     justify-content: center;
     height: 50px;
-	width: 50px;
-    font-size: 2em;
-    border: 2px solid #ccc;
+    width: 50px;
+    font-size: 1.5em;
+    border: 1px solid #ccc; /* Border for individual cells */
     cursor: pointer;
 }
 
 .sudoku-cell:hover {
-    background-color: #f2f2f2;
+    background-color: #feffb9;
+}
+
+/* Add thicker borders for the houses */
+.sudoku-grid::before,
+.sudoku-grid::after {
+    content: '';
+    display: block;
+    position: absolute;
+    background-color: #333;
+}
+
+.sudoku-grid::before,
+.sudoku-grid::after {
+    width: 100%;
+    height: 2px; /* Thickness of the horizontal borders */
+}
+
+.sudoku-grid::before {
+    top: calc(33.333% - 1px); /* Position below the first row of each 3 rows */
+    left: 0; /* Position at the top of the grid */
+}
+
+.sudoku-grid::after {
+    top: calc(66.666% - 1px); /* Position below the second row of each 3 rows */
+    left: 0; /* Position at the bottom of the grid */
+}
+
+.sudoku-grid > div:nth-child(3)::after,
+.sudoku-grid > div:nth-child(6)::after {
+    content: '';
+    display: block;
+    position: absolute;
+    background-color: #333;
+    width: 2px; /* Thickness of the vertical borders */
+    height: 100%;
+}
+
+.sudoku-grid > div:nth-child(3)::after {
+    left: calc(33.333% - 1px); /* Position after the first column of each 3 columns */
+    top: 0;
+}
+
+.sudoku-grid > div:nth-child(6)::after {
+    left: calc(66.666% - 1px); /* Position after the second column of each 3 columns */
+    top: 0;
 }
