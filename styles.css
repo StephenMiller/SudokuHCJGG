@@ -1,0 +1,30 @@
+body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.sudoku-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 2px;
+    border: 2px solid #333;
+}
+
+.sudoku-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+	width: 50px;
+    font-size: 2em;
+    border: 2px solid #ccc;
+    cursor: pointer;
+}
+
+.sudoku-cell:hover {
+    background-color: #f2f2f2;
+}
