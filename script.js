@@ -1,38 +1,42 @@
+// Add a function to handle grid selection
+function selectGrid(gridIndex) {
+    const selectedGrid = Cell.selectStartingGrid(gridIndex)
+    clearBoard()
+    initializeBoard(selectedGrid)
+}
+
+// Add a function to clear the board
+function clearBoard() {
+    // Logic to clear the board (reset cells)
+    // For each cell in your grid, set value to null, editable to true, and remove the gray background
+}
+
+function initializeBoard(selectedGrid) {
+    // Assuming you have a 9x9 Sudoku board represented as an array of arrays
+
+    // Initialize the board with empty cells
+    const board = Array.from({ length: 9 }, () => Array(9).fill(null))
+    const myNode = document.getElementById('sudoku-grid')
+    myNode.innerHTML=''
+
+    // Iterate through each character in the selected grid and fill the board
+    for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+            const index = row * 9 + col
+            const value = parseInt(selectedGrid[index], 10)
+
+            // Set the value of the cell
+            board[row][col] = value
+
+            // Create a new cell and initialize it with the value from the starting grid
+            const cell = new Cell(row, col, value);
+            document.getElementById('sudoku-grid').appendChild(cell.element)
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    const sudokuGrid = document.getElementById('sudoku-grid');
-
-    // Replace this with your Sudoku data loading logic
-    const sudokuData1 = [
-        [5, 3, 0, 0, 7, 0, 0, 0, 0],
-        [6, 0, 0, 1, 9, 5, 0, 0, 0],
-        [0, 9, 8, 0, 0, 0, 0, 6, 0],
-        [8, 0, 0, 0, 6, 0, 0, 0, 3],
-        [4, 0, 0, 8, 0, 3, 0, 0, 1],
-        [7, 0, 0, 0, 2, 0, 0, 0, 6],
-        [0, 6, 0, 0, 0, 0, 2, 8, 0],
-        [0, 0, 0, 4, 1, 9, 0, 0, 5],
-        [0, 0, 0, 0, 8, 0, 0, 7, 9],
-    ];
-
-    const sudokuData2 = [
-        [5, 3, 0, 0, 7, 0, 0, 0, 0],
-        [6, 0, 0, 1, 9, 5, 0, 0, 0],
-        [0, 9, 8, 0, 0, 0, 0, 6, 0],
-        [8, 0, 0, 0, 6, 0, 0, 0, 3],
-        [4, 0, 0, 8, 0, 3, 0, 0, 1],
-        [7, 0, 0, 0, 2, 0, 0, 0, 6],
-        [0, 6, 0, 0, 0, 0, 2, 8, 0],
-        [0, 0, 0, 4, 1, 9, 0, 0, 5],
-        [0, 0, 0, 0, 8, 0, 0, 7, 9],
-    ];
-
     // Render the Sudoku grid
-    sudokuData1.forEach((row, rowIndex) => {
-        row.forEach((value, colIndex) => {
-            // Create a new Cell instance for each cell in the grid
-            const cell = new Cell(rowIndex, colIndex, value);
-            // Append the cell element to the Sudoku grid
-            sudokuGrid.appendChild(cell.element);
-        });
-    });
+    initializeBoard(0)  
 });
+
