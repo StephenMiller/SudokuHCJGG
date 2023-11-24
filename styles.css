@@ -91,3 +91,16 @@ body {
     padding: 5px 10px;
     cursor: pointer;
 }
+
+/* Add some styling to stack buttons vertically */
+.grid-selection-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: max-content; /* Adjusted width */
+}
+
+/* Style individual buttons (optional) */
+.grid-selection-buttons button {
+    margin: 5px;
+}
