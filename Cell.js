@@ -37,6 +37,7 @@ class Cell {
             return Cell.startingGrids[0]; // Default to the first grid
         }
     }
+    
 
     determineHouse(row, col) {
         // Determine the house (3x3 subgrid) index based on row and column
