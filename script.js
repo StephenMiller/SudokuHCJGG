@@ -8,4 +8,3 @@ function selectGrid(gridIndex) {
 document.addEventListener('DOMContentLoaded', () => {
     game = new Game();
 });
-
