@@ -1,7 +1,7 @@
 class Cell {
 
     static activeCell = null
-
+    static MAX_VALUE = 9
     static startingGrids = [
         // ... (existing starting grids)
         "530070000600195000098000060800060003400803001700020006060000280000419005000080079",
@@ -37,7 +37,6 @@ class Cell {
             return Cell.startingGrids[0]; // Default to the first grid
         }
     }
-    
 
     determineHouse(row, col) {
         // Determine the house (3x3 subgrid) index based on row and column
@@ -58,9 +57,9 @@ class Cell {
         overlay.classList.add('overlay');
 
         // Values including blank (0) are added to the overlay
-        for (let value = 1; value <= 10; value++) {
+        for (let value = 1; value <= Cell.MAX_VALUE + 1; value++) {
             const valueButton = document.createElement('button');
-            valueButton.textContent = value === 10 ? 'Blank' : value;
+            valueButton.textContent = value === Cell.MAX_VALUE + 1 ? 'Blank' : value;
             valueButton.addEventListener('click', () => this.handleValueSelection(value));
             overlay.appendChild(valueButton);
         }
