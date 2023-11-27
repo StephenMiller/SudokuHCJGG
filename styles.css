@@ -104,3 +104,48 @@ body {
 .grid-selection-buttons button {
     margin: 5px;
 }
+
+.sub-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Adjust the number of columns as needed */
+    grid-template-rows: repeat(3, 1fr);
+    grid-gap: 6px; /* Adjust the gap between sub-cells as needed */
+    column-gap:16px;
+    margin-top: 0px; /* Adjust the value as needed */
+}
+
+.sub-cell {
+    width: 100%; /* Adjust the width to leave some space between sub-cells */
+    height: 10px; /* Adjust the height to leave some space between sub-cells */
+    text-align: center;
+    line-height: 20px;
+    font-size: 12px;
+
+    /* Added styles for consistent positioning */
+    position:relative;
+}
+
+.sub-cell::before {
+    /* Use ::before pseudo-element to create a placeholder */
+    content: ''; 
+    display: block;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Center the numbers within the sub-cell */
+.sub-cell span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.sub-cell.single-possibility > span {
+    background-color: yellow !important;
+}
+
