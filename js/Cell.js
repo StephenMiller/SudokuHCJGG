@@ -9,7 +9,7 @@ class Cell {
         this.element = this.createDivElement();
         this.editable = true;
         this.possibilities = Array(Cell.MAX_VALUE).fill(true);
-        this.numberOfPossiblities = 9;
+        this.numberOfPossibilities = 9;
 
         // Add a click event listener to the cell element
         this.element.addEventListener( 'click', () => this.handleCellClick() );
@@ -85,8 +85,6 @@ class Cell {
          // Create a sub-grid container
          const subGrid = document.createElement('div');
          subGrid.classList.add('sub-grid');
-         console.log(`${this.row},${this.col}`)
-         console.log(this.numberOfPossibilities)
      
          for (let i = 1; i <= Game.MAGIC_NUMBER; i++) {
              const subCell = document.createElement('div');
@@ -100,11 +98,21 @@ class Cell {
              subGrid.appendChild(subCell);
              
              if(this.numberOfPossibilities === 1){
-                subCell.classList.add('single-possibility')
+                subCell.classList.add('single-cell-possibility')
              }
          }
      
          this.element.appendChild(subGrid);
+    }
+
+    markSinglePossibility(value) {
+        this.element.querySelector(`.sub-cell[data-value="${value}"]`).classList.add('single-group-possibility');
+    }
+
+    removeSinglePossibilityMark() {
+        this.element.querySelectorAll('.sub-cell.single-group-possibility').forEach(subCell => {
+            subCell.classList.remove('single-group-possibility');
+        });
     }
 
     hideSubCells(){
@@ -113,25 +121,17 @@ class Cell {
     }
 
     updatePossibilities(valuesInGroup) {
-        console.log(`Update Possibilities for Cell: (${this.row}, ${this.col})`);
-        console.log(`Values in Group: ${valuesInGroup}`);
-        console.log(`Possibilities before logic: ${this.possibilities}`);
-
-        for(const value of valuesInGroup) {
-            if(!this.value){
-                this.possibilities[value-1] = false;
+        for (const value of valuesInGroup) {
+            if (!this.value || this.value === value) {
+                this.possibilities[value - 1] = false;
             }
         }
-
-        this.numberOfPossibilities = 0;
-        for(let i=0; i<Grid.MAGIC_NUMBER; i++){
-            if(this.possibilities[i]){
-                this.numberOfPossibilities++;
-            }
-        }
-
-        this.hideSubCells()
-        this.updateCellDisplay()
-        console.log(`Possibilities after logic: ${this.possibilities}`);
+    
+        this.numberOfPossibilities = this.possibilities.filter(possibility => possibility).length;
+    
+        this.hideSubCells();
+        this.updateCellDisplay();
+        //eventBus.publish(`possibilitiesUpdated`, this);
     }
+    
 }

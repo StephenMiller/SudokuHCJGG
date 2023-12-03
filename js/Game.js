@@ -18,6 +18,7 @@ class Game {
         Game.activeGame = this;
         this.activeCell = null;
         this.grid = new Grid();
+        this.nextGrid = new Grid(); // Initialize the next grid
         this.addEventListeners();
         this.startNewGame(0);  // Initial game
 
