@@ -32,13 +32,8 @@ class Grid{
         this.clearBoard()
 
         for (let row = 0; row < Grid.MAGIC_NUMBER; row++) {
-            for (let col = 0; col < Grid.MAGIC_NUMBER; col++) {
-                const index = row * Grid.MAGIC_NUMBER + col;
-                console.log(`Index: ${index}`)
-                const value = parseInt( selectedGrid[index], 10 );
-                
+            for (let col = 0; col < Grid.MAGIC_NUMBER; col++) {              
                 const cell = new Cell(row, col);
-                cell.initializeCell(value);
                 this.board[row][col] = cell;
                 this.rowGroups[row].addCell(cell);
                 this.colGroups[col].addCell(cell);
@@ -46,10 +41,19 @@ class Grid{
                 this.sudokuGridElement.appendChild(cell.element);
             }
         }
+
+        for (let row = 0; row < Grid.MAGIC_NUMBER; row++) {
+            for (let col = 0; col < Grid.MAGIC_NUMBER; col++) {
+                const index = row * Grid.MAGIC_NUMBER + col;
+                const value = parseInt( selectedGrid[index], 10 );
+                this.board[row][col].initializeCell(value);
+            }
+        }
     }
 
     handleCellUpdate(updatedCell) {
-        console.log(`Cell (${updatedCell.row},${updatedCell.col}) House:`)
+        console.log(`Cell (${updatedCell.row},${updatedCell.col}) House:${updatedCell.house}`);
+        console.log(updatedCell)
 
         const uniqueRowGroups = Array.from(new Set([
             ...this.rowGroups[updatedCell.row].getCells()
