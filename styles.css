@@ -145,7 +145,11 @@ body {
     transform: translate(-50%, -50%);
 }
 
-.sub-cell.single-possibility > span {
-    background-color: yellow !important;
+.sub-cell.single-cell-possibility > span {
+    background-color: yellow;
+}
+
+.sub-cell.single-group-possibility > span {
+    background-color: orange;
 }
 
