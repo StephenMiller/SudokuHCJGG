@@ -8,15 +8,18 @@
 </head>
 <body>
     <div class="sudoku-grid" id="sudoku-grid"></div>
+    <script src="js/Game.js"></script>
     <script src="js/EventBus.js"></script>
-    <script src="js/Game.js"></script>    
+    <script src="js/Cell.js"></script>    
     <script src="js/Grid.js"></script>
     <script src="js/Group.js"></script>
-    <script src="js/Cell.js"></script>
     <script src="js/script.js"></script>
+    <script src="js/SelectionOverlay.js"></script>
 
     <!-- Add these buttons to select starting grids -->
     <div class="grid-selection-buttons">
+        <button onclick="newGrid()">New Game</button>
+        <button onclick="clearGrid()">Clear Game</button>
         <button onclick="selectGrid(0)">Puzzle 1</button>
         <button onclick="selectGrid(1)">Puzzle 2</button>
         <button onclick="selectGrid(2)">Puzzle 3</button>

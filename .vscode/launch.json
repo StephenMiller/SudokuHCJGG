@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "type": "chrome",
+            "name": "file:///C:/Users/mrste/Documents/_3_%20Hobbies%20and%20Interests/CodeDev/SudokuHCJGG/index.html",
+            "request": "launch",
+            "url": "file:///C:/Users/mrste/Documents/_3_%20Hobbies%20and%20Interests/CodeDev/SudokuHCJGG/index.html"
+        }
+    ]
+}

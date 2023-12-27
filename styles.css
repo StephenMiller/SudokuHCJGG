@@ -153,3 +153,6 @@ body {
     background-color: orange;
 }
 
+.sub-cell.pair > span {
+    background-color: pink;
+}
