@@ -153,3 +153,10 @@ body {
     background-color: orange;
 }
 
+.sub-cell.row-pair > span {
+    background-color: pink;
+}
+
+.sub-cell.column-pair > span {
+    background-color: lightgreen;
+}
