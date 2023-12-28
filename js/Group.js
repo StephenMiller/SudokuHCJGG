@@ -66,7 +66,7 @@ class Group{
             if (count === 1) {
                 this.cells.forEach(c => {
                     if (c.possibilities[value]) {
-                        c.display.markSinglePossibility(value);
+                        c.display.markSinglePossibility(value, true);
                     }
                 });
             }
@@ -96,12 +96,14 @@ class Group{
                     const sameSubRow = possibleCells[0].row == possibleCells[1].row;
     
                     // If the two cells are in the same sub-row or sub-column, mark them
-                    possibleCells.forEach(cell => cell.display.markPair(value,sameSubColumn || sameSubRow));
+                    possibleCells.forEach(cell => cell.display.markRowPair(value,sameSubRow));
+                    possibleCells.forEach(cell => cell.display.markColumnPair(value,sameSubColumn));
 
                 }
             } else {
-                const possibleCells = this.cells.filter(cell => cell.possibilities[value]);
-                possibleCells.forEach(cell => cell.display.markPair(value, false));
+                const possibleCells = this.cells;
+                possibleCells.forEach(cell => cell.display.markRowPair(value, false));
+                possibleCells.forEach(cell => cell.display.markColumnPair(value, false));
             }
         }
     }

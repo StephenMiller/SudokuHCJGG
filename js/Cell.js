@@ -211,47 +211,57 @@ class CellDisplay {
         const subCells = this.subGrid.querySelectorAll('.sub-cell');
         if (highlight) {
             subCells.forEach((subCell, index) => {
-                subCell.classList.add('single-cell-possibility');
+                if (!subCell.classList.contains('single-cell-possibility')) {
+                    subCell.classList.add('single-cell-possibility');
+                }
             });
         } else {
             subCells.forEach((subCell, index) => {
                 subCell.classList.remove('single-cell-possibility');
             });
         }
-        
     }
-    
-    markSinglePossibility(value) {
-        this.removeSinglePossibilityMark();
+
+    markSinglePossibility(value, shouldMark) {
         const subCells = this.subGrid.querySelectorAll('.sub-cell');
         subCells.forEach((subCell, index) => {
             if (index === value) {
-                subCell.classList.add('single-group-possibility');
+                if (shouldMark && !subCell.classList.contains('single-cell-possibility')) {
+                    subCell.classList.add('single-group-possibility');
+                } else {
+                    subCell.classList.remove('single-group-possibility');
+                }
             }
         });
     }
 
-    removeSinglePossibilityMark() {
-        const markedSubCells = this.subGrid.querySelectorAll('.sub-cell.single-group-possibility');
-        markedSubCells.forEach(subCell => {
-            subCell.classList.remove('single-group-possibility');
+    markRowPair(value, shouldMark) {
+        const subCells = this.subGrid.querySelectorAll('.sub-cell');
+        subCells.forEach((subCell, index) => {
+            if (index === value) {
+                if (shouldMark && !subCell.classList.contains('single-cell-possibility') && !subCell.classList.contains('single-group-possibility')) {
+                    subCell.classList.add('row-pair');
+                } else {
+                    subCell.classList.remove('row-pair');
+                }
+            }
+        });
+    }
+
+    markColumnPair(value, shouldMark) {
+        const subCells = this.subGrid.querySelectorAll('.sub-cell');
+        subCells.forEach((subCell, index) => {
+            if (index === value) {
+                if (shouldMark && !subCell.classList.contains('single-cell-possibility') && !subCell.classList.contains('single-group-possibility')) {
+                    subCell.classList.add('column-pair');
+                } else {
+                    subCell.classList.remove('column-pair');
+                }
+            }
         });
     }
 
     markError() {
         this.element.classList.add('error');
-    }
-
-    markPair(value, shouldMark) {
-        const subCells = this.subGrid.querySelectorAll('.sub-cell');
-        subCells.forEach((subCell, index) => {
-            if (index === value) {
-                if (shouldMark) {
-                    subCell.classList.add('pair');
-                } else {
-                    subCell.classList.remove('pair');
-                }
-            }
-        });
     }
 }
