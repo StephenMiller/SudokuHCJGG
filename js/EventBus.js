@@ -4,15 +4,28 @@ class EventBus {
     }
 
     subscribe(event, callback) {
-        if (!this.subscribers[event]) {
-            this.subscribers[event] = [];
+        this.subscribers[event] = this.subscribers[event] || [];
+        if (!this.subscribers[event].includes(callback)) {
+            this.subscribers[event].push(callback);
         }
-        this.subscribers[event].push(callback);
+        //console.log(this.subscribers);
+    }
+    
+    unSubscribe(event, callback) {
+        if (this.subscribers[event]) {
+            this.subscribers[event] = this.subscribers[event].filter(subscriber => subscriber !== callback);
+        }
     }
 
-    publish(event, data) {
+    publishData(event, data) {
         if (this.subscribers[event]) {
             this.subscribers[event].forEach(callback => callback(data));
+        }
+    }
+
+    publish(event, ...args) {
+        if(this.subscribers[event]) {
+            this.subscribers[event].forEach(callback => callback(...args));
         }
     }
 }
