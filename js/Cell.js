@@ -68,7 +68,7 @@ class Cell {
         const houseCol = Math.floor(col / 3);
         return houseRow * 3 + houseCol;
     }
-
+  
     handleCellClick() {
         if (Game.activeGame) {
             if (this.editable) {

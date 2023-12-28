@@ -35,7 +35,6 @@ class Game {
         this.nextGrid = new Grid(); // Initialize the next grid, the future step based on logical implications
         this.addEventListeners();
         this.hintsButton = document.getElementById('hints-button');
-
         this.startNewGame(1);  // Initial game
     }
 
