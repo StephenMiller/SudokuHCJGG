@@ -22,7 +22,11 @@ class Game {
         // Diabolical
         "300000000050320000000000700000200900100040002063000000000000010000000000000082640",
         // Extreme
-        "100007090030020008009600500005300900010080002600004000300000010040000007007000300"
+        "100007090030020008009600500005300900010080002600004000300000010040000007007000300",
+        // p178 X-treme GLS
+        "002705900010000080000000000005201300030000010007906200000000000060000030004609700",
+        // p179 Ultinate GLS
+        "070008000500200300008040060060000900200080004009000070030020500006009002000100080"
     ]
 
     constructor() {
@@ -30,6 +34,7 @@ class Game {
         Game.eventBus = new EventBus();
         Game.selector = new SelectionOverlay();
         Game.hintsEnabled = true;
+        this.score = 0;
         this.activeCell = null;
         this.grid = new Grid(); // This is the current grid and the on displayed to screen
         this.nextGrid = new Grid(); // Initialize the next grid, the future step based on logical implications
@@ -56,6 +61,7 @@ class Game {
     startNewGame(gridIndex) {
         console.log(`Start New Game Index: ${gridIndex}`);
         const selectedGrid = Game.selectStartingGrid(gridIndex);
+        this.score = 0;
         this.grid.initializeBoard(selectedGrid);
         this.updateBoard();
     }    
@@ -83,8 +89,27 @@ class Game {
         }
     }
 
+    updateAllCellDisplays() {
+        this.grid.board.forEach(row => {
+            row.forEach(cell => {
+                cell.updateLogic([]);
+            });
+        });
+
+        this.grid.rowGroups.forEach(group => group.updateLogic());
+        this.grid.columnGroups.forEach(group => group.updateLogic());
+        this.grid.houseGroups.forEach(group => group.updateLogic());
+    }
+
     calculateScores() {
         // How many cells solved?
+        for(let row = 0; row < Game.MAGIC_NUMBER; row++) {
+            for(let col = 0; col < Game.MAGIC_NUMBER; col++) {
+                if(this.grid.board[row][col].solved) {
+                    this.score++;
+                }
+            }
+        }
 
         // How many numbers completed?
 
