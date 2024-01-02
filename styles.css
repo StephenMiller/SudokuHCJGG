@@ -16,14 +16,20 @@ body {
 }
 
 .sudoku-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     height: 50px;
     width: 50px;
     font-size: 1.5em;
     border: 1px solid #ccc; /* Border for individual cells */
     cursor: pointer;
+}
+
+.cell-value {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.0em;
+    height: 100%;
+    width: 100%;
 }
 
 .sudoku-cell:hover {
@@ -110,32 +116,36 @@ body {
     grid-template-columns: repeat(3, 1fr); /* Adjust the number of columns as needed */
     grid-template-rows: repeat(3, 1fr);
     grid-gap: 6px; /* Adjust the gap between sub-cells as needed */
-    column-gap:16px;
-    margin-top: 0px; /* Adjust the value as needed */
+    column-gap:8px;
+    margin-top: -44px; /* Adjust the value as needed */
 }
 
 .sub-cell {
     width: 100%; /* Adjust the width to leave some space between sub-cells */
-    height: 10px; /* Adjust the height to leave some space between sub-cells */
+    height: 9px; /* Adjust the height to leave some space between sub-cells */
     text-align: center;
-    line-height: 20px;
+    line-height: 15px;
     font-size: 12px;
 
     /* Added styles for consistent positioning */
     position:relative;
+    display:flex;
+    justify-content:center;
+    align-items:center;
 }
 
-.sub-cell::before {
-    /* Use ::before pseudo-element to create a placeholder */
+/* Use ::before pseudo-element to create a placeholder */
+/*.sub-cell::before {
+    
     content: ''; 
     display: block;
-    height: 100%;
+    height: 80%;
     width: 100%;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-}
+}*/
 
 /* Center the numbers within the sub-cell */
 .sub-cell span {
@@ -158,5 +168,47 @@ body {
 }
 
 .sub-cell.column-pair > span {
+    background-color: lightskyblue;
+}
+
+.sub-cell.house-pair > span {
     background-color: lightgreen;
+}
+
+.sub-cell.row-column-pair > span {
+    background-color: plum;
+}
+
+@keyframes glowSelection {
+    0% {
+        box-shadow: 0 0 5px #ffff00, 0 0 10px #ffff00, 0 0 15px #ffff00, 0 0 20px #ffff00;
+    }
+    80% {
+        box-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00, 0 0 30px #ffff00, 0 0 40px #ffff00;
+    }
+    100% {
+        box-shadow: 0 0 0px #ffff00, 0 0 0px #ffff00, 0 0 0px #ffff00, 0 0 0px #ffff00;
+    }
+}
+
+@keyframes glowLogic {
+    0% { background-color: initial; }
+    50% { background-color: orange; }
+    100% { background-color: initial; }
+}
+
+.cell-glow {
+    animation: glowSelection 1s ease-out;
+    animation-fill-mode: forwards;
+}
+
+.cell-checking-logic {
+    animation: glowLogic 1s ease-out;
+    animation-fill-mode: forwards;
+}
+
+.cell-frame {
+    border: 3px solid #ffea00;
+    width: 90%;
+    height: 90%;
 }
