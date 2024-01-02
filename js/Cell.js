@@ -2,60 +2,119 @@ const BACKGROUND_COLOR = 'lightgray';
 
 class Cell {
     static activeCell = null;
-    static MAX_VALUE = 9;
 
-    constructor(row, column) {
+    constructor(row, column, grid) {
+        // Positional Identity
         this.row = row;
         this.col = column;
         this.house = this.determineHouse(this.row, this.col);
+
+        // Group Contexts
         this.rowGroup = null;
         this.columnGroup = null;
         this.houseGroup = null;
+
+        // Base Attributes
         this.editable = true;
         this.inError = false;
-        this.possibilities = Array(Cell.MAX_VALUE).fill(true);
-        this.numberOfPossibilities = Cell.MAX_VALUE;
-        this.display = new CellDisplay(this);
+        this.possibilities = Array(Grid.SIZE).fill(true);
+        this.numberOfPossibilities = Grid.SIZE;
+
+        // Logical Attributes
+        this.value = 0;
+        this.solved = false;
+        this.singlePossibility = false;
+        this.singleGroupPossibility = Array(Grid.SIZE).fill(false);
+        this.partOfRowPair = Array(Grid.SIZE).fill(false);
+        this.partOfColumnPair = Array(Grid.SIZE).fill(false);
+        this.partOfHousePair = Array(Grid.SIZE).fill(false);
+        this.partOfDoublePair = Array(Grid.SIZE).fill(false);
+        this.pairPartner = Array(Grid.SIZE).fill(null);
+        this.inError = false;
+
+        // Display/GUI Mechanics
+        this.display = new CellDisplay(this, grid);
     }
 
     initializeCell(initialValue) {
-        // Invocation for grid starting cells
-        this.updateCellValue(initialValue);
-        if (this.value !== null) {
+        console.log(`Initializing Cell: (${this.row}, ${this.col}) with value: ${initialValue}`);
+        // Invocation for grid starting cells        
+        if (initialValue.value !== null && initialValue !== 0) {
             this.editable = false;
             this.display.element.style.backgroundColor = BACKGROUND_COLOR;
+            this.updateCellValue(initialValue);
         }
     }
 
     updateCellValue(newValue) {
-        /* Validate that newValue is numeric value between 1 and 9
-            only when newValue is valid will it be applied
-           Regex: ^ means anchor to start of string, 
-                  [1-9] means any digit one through nine,
-                  ? means 1 or more of the previous character,
-                  $ means anchor to end of string
-        */
-        const isValidInput = /^[1-9]?$/.test(newValue); 
+        // Invocation for user input
+        const isValidInput = /^[0-9]?$/.test(newValue); 
         if (isValidInput) {
             this.value = newValue;
-            this.possibilities = Array(Game.MAGIC_NUMBER).fill(false);
-            this.possibilities[this.value - 1] = true;
-            console.log(`Cell value updated to: ${this.value}, publishing to rowUpdate${this.row}`);
-            Game.eventBus.publish(`rowUpdate${this.row}`, this);
-            console.log(`Cell value updated to: ${this.value}, publishing to columnUpdate${this.col}`);
-            Game.eventBus.publish(`columnUpdate${this.col}`, this);
-            console.log(`Cell value updated to: ${this.value}, publishing to houseUpdate${this.house}`);
+            this.solved = (this.value != 0);
+            if(this.value !== 0) {
+                this.possibilities = Array(Grid.SIZE).fill(false);
+                this.possibilities[newValue - 1] = true;
+            } else {
+                this.possibilities = Array(Grid.SIZE).fill(false);
+                const values = this.rowGroup.getValues().concat(this.columnGroup.getValues(), this.houseGroup.getValues());
+                this.updateLogic(this.rowGroup.getValues().concat(this.columnGroup.getValues(), this.houseGroup.getValues()));
+            }
+            
+            this.display.update();
             Game.eventBus.publish(`houseUpdate${this.house}`, this);
-            this.rowGroup.update(this);
-            this.columnGroup.update(this);
-            this.houseGroup.update(this);
+            Game.eventBus.publish(`rowUpdate${this.row}`, this);
+            Game.eventBus.publish(`columnUpdate${this.col}`, this);
         } else {
-            this.value = null;
-            if(newValue !== 0)
-                console.warn(`Invalid input received: ${newValue}`);
+            console.warn(`Invalid input received: ${newValue}`);
         }
         this.display.update();
-    } 
+    }
+
+    // Called when a cell is changed,
+    // To update a cells possiblities
+    // from the values found in one of its three groups.
+    updateLogic(valuesInGroup) {
+        valuesInGroup.forEach(value => {
+            // If this cell's value is NULL and the current iteration value is in the group...
+            if (this.value == 0) {
+                // then set possibility to false, 
+                // Index is one less than the displayed value (index = value - 1)
+                const index = value - 1;
+                this.possibilities[index] = false;
+                if( this.partOfRowPair[index] || this.partOfColumnPair[index] || this.partOfHousePair[index]) {
+                    //Notify pair partner that this cell is no longer a possibility
+                    this.pairPartner[index].pairUpdate(index);
+                }
+            }
+        });
+
+        // COUNT possiblities
+        this.numberOfPossibilities = this.possibilities.filter(possibility => possibility).length;
+
+        // CHECK if solved
+        this.singlePossibility = (this.numberOfPossibilities === 1);
+
+        // UPDATE display
+        this.display.update();
+    }
+
+    pairUpdate(index) {
+        console.log(`Updating Pair in Cell: (${this.row}, ${this.col}) with index: ${index}`);
+        console.log(`Pair Update: ${this.partOfRowPair[index]}, ${this.partOfColumnPair[index]}, ${this.partOfHousePair[index]}`);
+        if (this.partOfRowPair[index] || this.partOfColumnPair[index] || this.partOfHousePair[index]) {
+            console.log(`Pair Update: ${this}, ${this.pairPartner[index]}, and ${this.pairPartner[index].singleGroupPossibility[index]}`);
+            this.pairPartner[index].singleGroupPossibility = Array(Grid.SIZE).fill(false);
+            this.pairPartner[index].singleGroupPossibility[index] = true;
+            this.pairPartner[index].partOfRowPair = Array(Grid.SIZE).fill(false);
+            this.pairPartner[index].partOfColumnPair = Array(Grid.SIZE).fill(false);
+            this.pairPartner[index].partOfHousePair = Array(Grid.SIZE).fill(false);
+            this.pairPartner[index].partOfDoublePair = Array(Grid.SIZE).fill(false);
+            this.pairPartner[index].pairPartner[index] = null;
+            console.log(`Pair Update: ${this}, ${this.pairPartner[index]}, and ${this.pairPartner[index].singleGroupPossibility[index]}`);
+        }
+        this.display.updateCell(this.pairPartner[index]);
+    }
 
     setGroups(rowGroup,columnGroup,houseGroup) {
         this.rowGroup = rowGroup;
@@ -72,12 +131,29 @@ class Cell {
     handleCellClick() {
         if (Game.activeGame) {
             if (this.editable) {
-                console.log(`Some clicked this cell: ${this.row}, ${this.col}`);
+                // Play beep sound
+                const beep = new Audio('beep.mp3'); // replace 'beep.mp3' with the path to your beep sound file
+                beep.play();
+
+                // Add glow animation
+                this.display.addGlow();
+                
+                // Remove glow animation after 1 second and add yellow frame
+                setTimeout(() => {
+                    this.display.removeGlow();
+                    this.display.addFrame();
+                }, 1000);
+
+                console.log(`*-- Some clicked this cell: ${this.row}, ${this.col}`);
                 //Set Game's active cell
                 const activeCell = Game.activeGame.activeCell;
+                if (activeCell && activeCell !== this) {
+                    activeCell.display.removeFrame(); // Remove the border from the previously active cell
+                    Game.selector.removeOverlay();
+                }
                 Game.activeGame.activeCell = this;
                 const printString = activeCell ? `${activeCell.row}, ${activeCell.col}` : 'null';
-                console.log(`This was the active cell before the one just clicked: ${printString}`);
+                console.log(`This previous active cell was: ${printString}`);
                 // Remove the overlay of the previously clicked cell
                 if (activeCell && activeCell !== this) {
                     Game.selector.removeOverlay();
@@ -98,61 +174,35 @@ class Cell {
                 // Set the active cell clicked cell
                 this.activeCell = this;
             } else {
-                this.removeOverlay();
+                Game.selector.removeOverlay();
                 this.activeCell = null;
             }
-        
         }
     }
 
     handleValueSelection(selectedValue) {
+        if( selectedValue === 10) {
+            selectedValue = 0;
+        }
+        console.log(`Value selected: ${selectedValue}`);
         this.updateCellValue(selectedValue);
         if (Game.selector) {
             Game.selector.removeOverlay();
         }
     }
-
-    getValue() {
-        return this.value;
-    }
-    
-    
-    // Called when a cell is changed,
-    // To update a cells possiblities
-    // from the values found in one of its three groups.
-    updatePossibilities(valuesInGroup) {
-        // RESET possibilities to FALSE
-        //this.possibilities.fill(true);
-
-        valuesInGroup.forEach(value => {
-            // If this cell's value is NULL and the current iteration value is in the group...
-            if (this.value == null) {
-                // then set possibility to false, 
-                // Index is one less than the displayed value (index = value - 1)
-                this.possibilities[value - 1] = false;
-            }
-        });
-
-        // COUNT possiblities
-        this.numberOfPossibilities = this.possibilities.filter(possibility => possibility).length;
-
-        // Trigger <DisplayUpdate> event
-        this.display.update();
-        //Game.eventBus.publish('possibilitiesUpdated', this);
-
-        // After updating possibilities, check if there's only one possibility left
-        this.display.highlight(this.numberOfPossibilities === 1);
-    }
 }
 
 class CellDisplay {
     static MIN_VALUE = 1;
-    static MAX_VALUE = 9;
 
-    constructor(cell) {
+    constructor(cell, grid) {
         this.cell = cell;
         this.element = this.createDivElement();
+        this.valueElement = this.createValueElement();
         this.subGrid = this.createSubCells();
+        this.element.appendChild(this.valueElement);
+        this.element.appendChild(this.subGrid);
+        grid.sudokuGridElement.appendChild(this.element);
     }
 
     createDivElement() {
@@ -162,19 +212,72 @@ class CellDisplay {
         return element;
     }
 
+    createValueElement() {
+        const valueElement = document.createElement('div');
+        valueElement.classList.add('cell-value');
+        return valueElement;
+    }
+
     update() {
-        this.showSubCells(Game.hintsEnabled && !this.cell.value);
-        if(this.cell.value) {
-            this.element.textContent = this.cell.value;
-            this.element.style.visibility = 'visible';
+        this.updateCell(this.cell);
+    }
+
+    updateCell(cell) {
+        // When starting to check logic
+        this.startCheckingLogic();
+        
+        if(cell.value) {
+            this.valueElement.textContent = cell.value;
+            const subCells = this.subGrid.querySelectorAll('.sub-cell');
+            subCells.forEach(subCell => this.showSubCells(false, subCell));
+        } else {
+            this.valueElement.textContent = '';
+            const subCells = this.subGrid.querySelectorAll('.sub-cell');
+            subCells.forEach((subCell, index) => {
+                this.showSubCells(Game.hintsEnabled && this.cell.possibilities[index], subCell);
+                this.highlight(cell.singlePossibility, subCell);
+                this.markSingleGroupPossibility(
+                    cell.singleGroupPossibility[index] && !cell.singlePossibility,
+                    subCell
+                );
+
+                this.markRowPair(
+                    cell.partOfRowPair[index] && !this.cell.singlePossibility && !this.cell.singleGroupPossibility[index], 
+                    subCell);
+            
+
+                this.markColumnPair(
+                    cell.partOfColumnPair[index] && !this.cell.singlePossibility && !this.cell.singleGroupPossibility[index], 
+                    subCell);
+       
+
+                this.markHousePair(
+                    cell.partOfHousePair[index] && !this.cell.singlePossibility && !this.cell.singleGroupPossibility[index], 
+                    subCell);
+
+                this.markRowAndColumnPair(
+                    cell.partOfRowPair[index] && cell.partOfColumnPair[index] && !this.cell.singlePossibility && !this.cell.singleGroupPossibility[index], 
+                    subCell);
+            });       
         }
+
+        // When done checking logic
+        this.stopCheckingLogic();
+    }
+
+    startCheckingLogic() {
+        this.element.classList.add('cell-checking-logic');
+    }
+
+    stopCheckingLogic() {
+        this.element.classList.remove('cell-checking-logic');
     }
    
     createSubCells() {
         const subGrid = document.createElement('div');
         subGrid.classList.add('sub-grid');
 
-        for (let i = CellDisplay.MIN_VALUE; i <= CellDisplay.MAX_VALUE; i++) {
+        for (let i = CellDisplay.MIN_VALUE; i <= Grid.SIZE; i++) {
             const subCell = document.createElement('div');
             subCell.classList.add('sub-cell');
             
@@ -189,79 +292,84 @@ class CellDisplay {
         return(subGrid);
     }
 
-    showSubCells(visible) {
-        const subCells = this.subGrid.querySelectorAll('.sub-cell');
-        
+    showSubCells(visible, subCell) {        
         if (visible) {
-            this.cell.possibilities.forEach((possibility, index) => {
-                // Update the visibility of the subcell that corresponds to this possibility
-                const subCell = subCells[index];
-                subCell.style.visibility = possibility ? 'visible' : 'hidden';
-            });
+            subCell.style.visibility = 'visible';
         } else {
-            this.cell.possibilities.forEach((possibility, index) => {
-                // Update the visibility of the subcell that corresponds to this possibility
-                const subCell = subCells[index];
-                subCell.style.visibility = 'hidden';
-            })
+            subCell.style.visibility = 'hidden';
         }
     }
     
-    highlight(highlight) {
-        const subCells = this.subGrid.querySelectorAll('.sub-cell');
+    highlight(highlight, subCell) {
         if (highlight) {
-            subCells.forEach((subCell, index) => {
-                if (!subCell.classList.contains('single-cell-possibility')) {
-                    subCell.classList.add('single-cell-possibility');
-                }
-            });
+            if (!subCell.classList.contains('single-cell-possibility'))
+                subCell.classList.add('single-cell-possibility');            
         } else {
-            subCells.forEach((subCell, index) => {
-                subCell.classList.remove('single-cell-possibility');
-            });
+            subCell.classList.remove('single-cell-possibility');
         }
     }
 
-    markSinglePossibility(value, shouldMark) {
-        const subCells = this.subGrid.querySelectorAll('.sub-cell');
-        subCells.forEach((subCell, index) => {
-            if (index === value) {
-                if (shouldMark && !subCell.classList.contains('single-cell-possibility')) {
-                    subCell.classList.add('single-group-possibility');
-                } else {
-                    subCell.classList.remove('single-group-possibility');
-                }
-            }
-        });
+    markSingleGroupPossibility(shouldMark, subCell) {
+        if (shouldMark) {
+            subCell.classList.add('single-group-possibility');
+            subCell.classList.remove('row-pair');
+            subCell.classList.remove('column-pair');
+            subCell.classList.remove('house-pair');
+        } else {
+            subCell.classList.remove('single-group-possibility');
+        }           
     }
 
-    markRowPair(value, shouldMark) {
-        const subCells = this.subGrid.querySelectorAll('.sub-cell');
-        subCells.forEach((subCell, index) => {
-            if (index === value) {
-                if (shouldMark && !subCell.classList.contains('single-cell-possibility') && !subCell.classList.contains('single-group-possibility')) {
-                    subCell.classList.add('row-pair');
-                } else {
-                    subCell.classList.remove('row-pair');
-                }
-            }
-        });
+    markRowPair(shouldMark, subCell) {
+        if (shouldMark) {
+            subCell.classList.add('row-pair');
+        } else {
+            subCell.classList.remove('row-pair');
+        }
+    }
+    
+
+    markColumnPair(shouldMark, subCell) {
+        if (shouldMark && !this.cell.singlePossibility) {
+            subCell.classList.add('column-pair');
+        } else {
+            subCell.classList.remove('column-pair');
+        }
     }
 
-    markColumnPair(value, shouldMark) {
-        const subCells = this.subGrid.querySelectorAll('.sub-cell');
-        subCells.forEach((subCell, index) => {
-            if (index === value) {
-                if (shouldMark && !subCell.classList.contains('single-cell-possibility') && !subCell.classList.contains('single-group-possibility')) {
-                    subCell.classList.add('column-pair');
-                } else {
-                    subCell.classList.remove('column-pair');
-                }
-            }
-        });
+    markHousePair(shouldMark, subCell) {     
+        if (shouldMark) {
+            subCell.classList.add('house-pair');
+        } else {
+            subCell.classList.remove('house-pair');
+        }
+    }
+
+    markRowAndColumnPair(shouldMark, subCell) {
+        if (shouldMark) {
+            subCell.classList.add('row-column-pair');
+        } else {
+            subCell.classList.remove('row-column-pair');
+        }
     }
 
     markError() {
         this.element.classList.add('error');
     }
+
+    addGlow() {
+        this.element.classList.add('cell-glow');
+    }
+
+    removeGlow() {
+        this.element.classList.remove('cell-glow');
+    }
+
+    addFrame() {
+        this.element.classList.add('cell-frame');
+    }   
+
+    removeFrame() {
+        this.element.classList.remove('cell-frame');
+    }   
 }

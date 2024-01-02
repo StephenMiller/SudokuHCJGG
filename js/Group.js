@@ -4,9 +4,12 @@ class Group{
         this.index = index;
         this.cells = cells;
         this.type = "Group";
-        this.possibilities = Array(9).fill(true);
-        this.numberOfPossiblities = Array(9).fill(9);
+        this.possibilities = Array(Grid.SIZE).fill(true);
+        this.numberOfPossiblities = Array(Grid.SIZE).fill(Grid.SIZE);
         this.eventName = ''; // to be overridden in subclasses
+        this.hasRowPair = Array(Grid.SIZE).fill(false);
+        this.hasColumnPair = Array(Grid.SIZE).fill(false);
+        this.hasHousePair = Array(Grid.SIZE).fill(false);
     }
 
     getCells() {
@@ -17,14 +20,11 @@ class Group{
         this.cells = [];
     }
 
-    unsubscribe() {
-        Game.eventBus.unSubscribe(this.eventName, this.update);
-    }
-
     getValues() {
         let array = Array(0);
         for(const cell of this.cells){
-            array.push(cell.value);
+            if(cell.value)
+                array.push(cell.value);
         }
         return array;
     }
@@ -33,130 +33,169 @@ class Group{
         return this.cells.length
     }
 
-    ugroupUpdate(){
+    checkForPairsInSubGroups() {    
+        const setPair = (cell1, cell2, index, pairProperty, hasPairProperty) => {
+            cell1[pairProperty][index] = true;
+            cell2[pairProperty][index] = true;
+            this[hasPairProperty][index] = true;
+        };
 
+        // Keep track of pairs that have been found
+        const pairs = [];
+
+        for (let index = 0; index < Grid.SIZE; index++) {
+            if (this.hasRowPair[index] || this.hasColumnPair[index] || this.hasHousePair[index]) continue;
+
+            if (this.numberOfPossiblities[index] === 2) {
+                const possibleCells = this.cells.filter(cell => cell.possibilities[index]);
+
+                if (possibleCells.length !== 2) {
+                    console.error(`Expected 2 possible cells, but got ${possibleCells.length}`);
+                    continue;
+                }
+
+                const [cell1, cell2] = possibleCells;
+
+                if (cell1.house === cell2.house) {
+                    cell1.pairPartner[index] = cell2;
+                    cell2.pairPartner[index] = cell1;
+
+                    if (cell1.col === cell2.col) {
+                        setPair(cell1, cell2, index, 'partOfColumnPair', 'hasColumnPair');
+                    }
+
+                    if (cell1.row === cell2.row) {
+                        setPair(cell1, cell2, index, 'partOfRowPair', 'hasRowPair');
+                    }
+
+                    if (cell1.row !== cell2.row && cell1.col !== cell2.col) {
+                        setPair(cell1, cell2, index, 'partOfHousePair', 'hasHousePair');
+                    }
+
+                    // Add the pair to the pairs array
+                    pairs.push({ cell1, cell2 });
+                }
+            }
+        }
+
+        // Check for double pairs
+        for (let i = 0; i < pairs.length; i++) {
+            for (let j = i + 1; j < pairs.length; j++) {
+                if (pairs[i].cell1 === pairs[j].cell1 && pairs[i].cell2 === pairs[j].cell2) {
+                    console.log(`Double pair found at cells ${pairs[i].cell1.index} and ${pairs[i].cell2.index}`);
+                }
+            }
+        }
     }
 
-    update(cell){
-        console.log(`Update triggered by cell: ${cell.value}`);
+    applyPairConsequences() {
+        for(let index = 0; index < Grid.SIZE; index++) {
+            if(this.hasRowPair[index] && this.type == "Row") {
+                console.log(`There is a pair for value ${index + 1} in this row`);
+                this.cells.forEach( cell => {
+                    if(!cell.partOfRowPair[index])
+                        cell.possibilities[index] = false;
+                });
+            }
+
+            if(this.hasColumnPair[index] && this.type == "Column"){
+                console.log(`There is a pair for value ${index + 1} in this column`);
+                this.cells.forEach( cell => {   
+                    if(!cell.partOfColumnPair[index])
+                        cell.possibilities[index] = false;
+                });
+            }                
+        }
+    }
+
+    updateLogic() {
+        this.baseLogic();
+
+        if(this.type == "House")
+            this.checkForPairsInSubGroups();
+
+        //this.applyPairConsequences();
+
+        this.interactiveGroups.forEach( group => {
+            group.baseLogic();
+            group.checkForPairsInSubGroups();
+            group.applyPairConsequences();
+        });
+    }
+
+    baseLogic() {
+        console.log(`Updating ${this.type} ${this.index}`);
 
         // Get the unique values in the group
         const valuesInGroup = this.getValues()
-        .filter((value, index, self) => self.indexOf(value) === index);
+            .filter((value, index, self) => self.indexOf(value) == index);
 
         // Update the possibilities for each cell in the group
-        this.cells.forEach(c => {
-            if (c !== cell) { // Don't update the cell that triggered the update
-                c.updatePossibilities(valuesInGroup);
-            }
-        });
+        this.cells.forEach( c => { c.updateLogic(valuesInGroup); } );
 
         // Count the number of possibilities for each value over the whole group
-        this.numberOfPossiblities = new Array(9).fill(0);
+        this.numberOfPossiblities = new Array(Grid.SIZE).fill(0);
         this.cells.forEach(c => {
             c.possibilities.forEach((possibility, index) => {
-                if (possibility) {
-                    this.numberOfPossiblities[index]++;
-                }
+                if(possibility) { this.numberOfPossiblities[index]++; }
             });
         });
 
-        // For every value that is unsolved but only has one possible cell in the group, mark that subcell
-        this.numberOfPossiblities.forEach((count, value) => {
+        // For every value that is unsolved but only has one possible cell in the group,
+        // mark that subcell as the only possible cell for that value
+        this.numberOfPossiblities.forEach((count, index) => {
             if (count === 1) {
                 this.cells.forEach(c => {
-                    if (c.possibilities[value]) {
-                        c.display.markSinglePossibility(value, true);
+                    if (c.possibilities[index] && !c.solved) {
+                        c.singleGroupPossibility[index] = true;
                     }
                 });
             }
         });
-
-        this.checkForPairsInSubGroups();
-    }
-
-    checkForPairsInSubGroups() {
-        console.log(`Checking for pairs in ${this.type} ${this.index}`);
-        // Define the sub-columns and sub-rows
-        const subColumns = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
-        const subRows = [[0, 3, 6], [1, 4, 7], [2, 5, 8]];
-    
-        // Check each value
-        for (let value = 0; value < 9; value++) {
-            // If there are exactly two possibilities for this value
-            if (this.numberOfPossiblities[value] === 2) {
-                console.log(`Found a pair for value ${value + 1}`);
-                // Get the cells that have this value as a possibility
-                const possibleCells = this.cells.filter(cell => cell.possibilities[value]);
-    
-                // Check if the two cells are in the same house
-                if (possibleCells[0].house === possibleCells[1].house) {
-                    // Check if the two cells are in the same sub-row or sub-column
-                    const sameSubColumn = possibleCells[0].col == possibleCells[1].col;
-                    const sameSubRow = possibleCells[0].row == possibleCells[1].row;
-    
-                    // If the two cells are in the same sub-row or sub-column, mark them
-                    possibleCells.forEach(cell => cell.display.markRowPair(value,sameSubRow));
-                    possibleCells.forEach(cell => cell.display.markColumnPair(value,sameSubColumn));
-
-                }
-            } else {
-                const possibleCells = this.cells;
-                possibleCells.forEach(cell => cell.display.markRowPair(value, false));
-                possibleCells.forEach(cell => cell.display.markColumnPair(value, false));
-            }
-        }
-    }
-
-    unmarkPair(value) {
-        console.log(`Unmarking pair for value ${value + 1}`);
-        // Get the cells that have this value as a possibility
-        const possibleCells = this.cells.filter(cell => cell.possibilities[value]);
-    
-        // If there is only one cell left with this value as a possibility, unmark it
-        if (possibleCells.length === 1) {
-            possibleCells[0].display.markPair(value, false);
-        }
-    }
-
-    processGroupCellsUpdate(cell, groupCells) {
-        const uniqueGroups = Array.from(new Set(groupCells));
-
-        const valuesInGroup = uniqueGroups.map(cell => cell.getValue())
-            .filter(value => value != null)
-            .filter((value, index, self) => self.indexOf(value) == index);
-
-        if(valuesInGroup.length > 0)
-            uniqueGroups.forEach(cell => cell.updatePossibilities(valuesInGroup));
     }
 }
 
 class RowGroup extends Group{
     constructor(index, cells = []) {
         super(index, cells);
-        console.log(`Createing a new row group with index: ${index}`);
         this.eventName = `rowUpdate${index}`;
         this.type = "Row";
-        Game.eventBus.subscribe(this.eventName, cell => this.processGroupCellsUpdate(cell, cells));
+        this.interactiveGroups = [];
+        Game.eventBus.subscribe( this.eventName, cell => this.updateLogic(cell) );
     }
+
+    setGroups(houseGroups) {
+        this.interactiveGroups = houseGroups.filter( house => house.index >= Math.floor(this.index / 3) * 3 && house.index < Math.floor(this.index / 3) * 3 + 3 && house.index != this.index );    }
 }
 
 class ColumnGroup extends Group{
     constructor(index, cells = []) {
         super(index, cells);
-        console.log(`Createing a new column group with index: ${index}`);
         this.eventName = `columnUpdate${index}`;
         this.type = "Column";
-        Game.eventBus.subscribe(this.eventName, cell => this.processGroupCellsUpdate(cell, cells));
+        this.interactiveGroups = [];
+        Game.eventBus.subscribe(this.eventName, cell => this.updateLogic(cell));
+    }
+
+    setGroups(houseGroups) {
+        this.interactiveGroups = houseGroups.filter( house => house.index % 3 == this.index % 3 && house.index != this.index);
     }
 }
 
 class HouseGroup extends Group{
     constructor(index, cells = []) {
         super(index, cells);
-        console.log(`Createing a new house group with index: ${index}`);
         this.eventName = `houseUpdate${index}`;
         this.type = "House";
-        Game.eventBus.subscribe(this.eventName, cell => this.processGroupCellsUpdate(cell, cells));
+        this.interactiveGroups = [];
+        Game.eventBus.subscribe( this.eventName, cell => this.updateLogic(cell) );
+    }
+
+    setGroups(rowGroups, columnGroups) {
+        const verticalSection = Math.floor(this.index / 3) * 3;
+        const horizontalSection = this.index % 3 * 3;
+
+        this.interactiveGroups = rowGroups.filter(row => row.index >= verticalSection && row.index < verticalSection + 3)
+            .concat(columnGroups.filter(column => column.index >= horizontalSection && column.index < horizontalSection + 3));
     }
 }
